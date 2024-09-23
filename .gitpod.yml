@@ -3,17 +3,24 @@ image: gitpod/workspace-base
 tasks:
   - name: install mamba
     init: |
-      curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
-      bash Mambaforge-$(uname)-$(uname -m).sh -b -p /workspace/conda && rm Mambaforge-$(uname)-$(uname -m).sh
-      /workspace/conda/bin/mamba init bash
+      cd /workspace
+      wget "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
+      bash Mambaforge-$(uname)-$(uname -m).sh -b -p /workspace/mambaforge && rm Mambaforge-$(uname)-$(uname -m).sh
+
+      /workspace/mambaforge/bin/mamba init bash
       source ${HOME}/.bashrc
-      mkdir -p /workspace/bin
       
       # set up conda evironment with R and needed packages
       mamba create -n gs -c conda-forge r-base r-argparse r-minpack.lm -y
       mamba activate gs
       mamba install -c bioconda kmc -y
 
+      cd /workspace
+      mkdir src bin && cd src # create directories for source code & binaries
+      git clone https://github.com/thegenemyers/FastK
+      cd FastK && make
+      install -c FastK Fastrm Fastmv Fastcp Fastmerge Histex Tabex Profex Logex Vennex Symmex Haplex Homex Fastcat /workspace/bin/
+    
       # install genomescope2 (both package and executible script)
       git clone https://github.com/tbenavi1/genomescope2.0
       R -e 'install.packages("genomescope2.0", repos=NULL, type="source")'
@@ -25,8 +32,11 @@ tasks:
 
       # download yeast data
       mkdir -p data && wget -P data https://sk13.cog.sanger.ac.uk/SRR3265401_{1,2}.fastq.gz
+
+      gp sync-done bundle
     command: |
-      /workspace/conda/bin/mamba init bash
+      cd /workspace
+      /workspace/mambaforge/bin/mamba init bash
       source ${HOME}/.bashrc
       mamba activate gs
 
@@ -37,20 +47,3 @@ vscode:
     - anwar.papyrus-pdf
 
 workspaceLocation: "/workspace"
-
-github:
-  prebuilds:
-    # enable for the master/default branch (defaults to true)
-    master: true
-    # enable for all branches in this repo (defaults to false)
-    branches: true
-    # enable for pull requests coming from this repo (defaults to true)
-    pullRequests: true
-    # enable for pull requests coming from forks (defaults to false)
-    pullRequestsFromForks: true
-    # add a "Review in Gitpod" button as a comment to pull requests (defaults to true)
-    addComment: true
-    # add a "Review in Gitpod" button to pull requests (defaults to false)
-    addBadge: false
-    # add a label once the prebuild is ready to pull requests (defaults to false)
-    addLabel: prebuilt-in-gitpod
