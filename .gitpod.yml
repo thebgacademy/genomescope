@@ -20,6 +20,7 @@ tasks:
       git clone https://github.com/thegenemyers/FastK
       cd FastK && make
       install -c FastK Fastrm Fastmv Fastcp Fastmerge Histex Tabex Profex Logex Vennex Symmex Haplex Homex Fastcat /workspace/bin/
+      cd ../..
     
       # install genomescope2 (both package and executible script)
       git clone https://github.com/tbenavi1/genomescope2.0
