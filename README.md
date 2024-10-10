@@ -45,7 +45,7 @@ By the end of this session you will be able to:
 
 ## Setting up the GitPod environment
 
-Click on the [following link](https://gitpod.io/new#https://github.com/BGAcademy23/genomescope). It should bring you to GitPod webpage and directly guide you to create a new workspace using GenomeScope tutoruial set up. Just click on continue and that's it. If for some reason you appear on the GitPod webpage and the opening window did not show up. Click on "Try for Free", log in with your GitHub account, then click on "New Workspace", type to the url `github.com/BGAcademy23/genomescope` and finally hit `Continue` button. 
+Click on the [following link](https://gitpod.io/new#https://github.com/thebgacademy/genomescope). It should bring you to GitPod webpage and directly guide you to create a new workspace using GenomeScope tutoruial set up. Just click on continue and that's it. If for some reason you appear on the GitPod webpage and the opening window did not show up. Click on "Try for Free", log in with your GitHub account, then click on "New Workspace", type to the url `github.com/thebgacademy/genomescope` and finally hit `Continue` button. 
 
 Whem GitPod opens, there might be about 3 minutes of installation logs running in the command line, but eventually the workspace will be created with the software installed and data avaialbe. It should look like this
 
@@ -61,23 +61,43 @@ This session is mostly to get you familiar with running GenomeScope in terminal.
 
 This section is just to show you how to get a k-mer spectrum out of reads. You don't need to do this for the practical, but just in case you'd like to learn how to run a k-mer counter, here's an example of a [KMC](https://github.com/refresh-bio/KMC) run (k=21) on yeast short-read datasets (SRR3265401). You can find these `.fastq.gz` files in your GitPod workspace (`workspace/data`).
 
-Note, there are many more k-mer counters. KMC is great one, but if you are dealing with lots of genomes, or with massive amount of data, we would recommend to switch to [FastK](https://github.com/thegenemyers/FASTK).
+Note, there are many more k-mer counters. KMC is great one, FastK is another, which is also integrated with many other k-mer tools and will be the counter we will work with here [FastK](https://github.com/thegenemyers/FASTK).
+
+```
+SAMPLE=SRR3265401
+FastK -v -t1 -k31 -M120 -T4 data/"$SAMPLE"* -NFastK_Table_"$SAMPLE"
+Histex -G FastK_Table_"$SAMPLE" > "$SAMPLE"_k31.hist
+```
+
+Have a look at the histogram file that was generated with the KMC transform command:
+
+```
+(gs) gitpod /workspace $ head "$SAMPLE"_k31.hist
+1       21412839
+2       1166085
+3       210516
+4       98202
+5       59914
+6       53390
+7       59737
+8       73224
+9       90391
+10      108374
+```
+
+The first column is the coverage, that is how many times a kmer is seen in the set of reads. The second column is the number of kmers that occur that many times. In this case, there are 10693844 kmers that only occur once. As we'll get into later, this is probably because these kmers overlap an error. But for now, just know that this `*.hist` format should contain two columns, with the coverage in the first column and the frequency in the second. This is the file will be an input for genomescope!
+
+P.S. if you want to see how to use KMC
 
 ```
 SAMPLE=SRR3265401
 mkdir -p tmp
 
 ls data/"$SAMPLE"* > FILES
-kmc -k21 -t4 -m96 -ci1 -cs100000 -fq @FILES $SAMPLE.21.kmc tmp/
+kmc -k31 -t4 -m96 -ci1 -cs100000 -fq @FILES $SAMPLE.31.kmc tmp/
 
-kmc_tools transform $SAMPLE.21.kmc histogram $SAMPLE.21.kmc.hist -cx100000
+kmc_tools transform $SAMPLE.31.kmc histogram $SAMPLE.31.kmc.hist -cx100000
 ```
-
-Have a look at the histogram file that was generated with the KMC transform command:
-
-![Screenshot 2023-09-14 at 23 20 26](https://github.com/BGAcademy23/genomescope/assets/28604909/744e0a4c-7aea-4528-a636-831ca411bb9d)
-
-The first column is the coverage, that is how many times a kmer is seen in the set of reads. The second column is the number of kmers that occur that many times. In this case, there are 10693844 kmers that only occur once. As we'll get into later, this is probably because these kmers overlap an error. But for now, just know that this `*.hist` format should contain two columns, with the coverage in the first column and the frequency in the second. This is the file will be an input for genomescope!
 
 ### Fitting genome models to your kmer spectrum using GenomeScope
 Now you have your own generated .hist (SRR3265401) and many others in the `workspace/histograms/` directory to play with.
@@ -89,7 +109,13 @@ genomescope.R
 
 You should see something like
 
-![Screenshot 2023-09-14 at 23 39 31](https://github.com/BGAcademy23/genomescope/assets/28604909/481a59bf-957b-45d4-a4d4-1ad8a956a173)
+```
+(gs) gitpod /workspace $ genomescope.R
+USAGE: genomescope.R -i input_histogram_file -o output_dir -p ploidy -k kmer_length
+OPTIONAL PARAMETERS: -n 'name_prefix' -l lambda -m max_kmercov --verbose --no_unique_sequence
+ADVANCED PARAMETERS: -t topology --initial_repetitiveness init_d --initial_heterozygosities init_r1,init_r2,...,init_rx --transform_exp t_exp --testing --true_params --trace_flag --num_rounds --fitted_hist
+HELP: genomescope.R --help
+```
 
 The only necessary parameters are the input and `-k`. It recommends naming the output directory and specifying the ploidy level (`-p`), otherwise it is going to assume diploid. There's other parameters such as `-l` and `-m`, which we will talk about later.
 
