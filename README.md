@@ -32,8 +32,10 @@ By the end of this session you will be able to:
 
 1. Basics knowledge of genomics
 2. Be ready for some non-linear regression
-3. (optional) familiarity with k-mers (Some materials developed by ourselves: <https://github.com/KamilSJaron/oh-know/wiki>)
-4. (optional) Read relevant sections of <https://www.nature.com/articles/s41467-020-14998-3>
+3. (optional) familiarity with k-mers
+     - See a review on the topic: https://arxiv.org/abs/2404.01519
+     - Some interactive materials: <https://github.com/KamilSJaron/oh-know/wiki>
+5. (optional) Read relevant sections of <https://www.nature.com/articles/s41467-020-14998-3>
 
 !!! warning "Please make sure you MEET THE PREREQUISITES and READ THE DESCRIPTION above"
 
@@ -47,21 +49,21 @@ By the end of this session you will be able to:
 
 Click on the [following link](https://gitpod.io/new#https://github.com/thebgacademy/genomescope). It should bring you to GitPod webpage and directly guide you to create a new workspace using GenomeScope tutoruial set up. Just click on continue and that's it. If for some reason you appear on the GitPod webpage and the opening window did not show up. Click on "Try for Free", log in with your GitHub account, then click on "New Workspace", type to the url `github.com/thebgacademy/genomescope` and finally hit `Continue` button. 
 
-Whem GitPod opens, there might be about 3 minutes of installation logs running in the command line, but eventually the workspace will be created with the software installed and data avaialbe. It should look like this
+Whem GitPod opens, there might be about 3 minutes of installation logs running in the command line, but eventually the workspace will be created with the software installed and data avaialbe. It should look like (moteless) like this
 
 ![Screenshot 2023-09-15 at 08 21 31](https://github.com/BGAcademy23/genomescope/assets/8181573/961e9219-a49c-4c4f-8b62-82911644865a)
 
-Note you can click on the small arrow next to `genomescope` directory and then on `README.md` to have this README file opened directly in GitPod. If you would like to eventually install the tools at your own computer or cluster, you can take a look at [the configuration .yml file](https://github.com/BGAcademy23/genomescope/blob/main/.gitpod.yml) we used to set up the gitpod. These commands are setting up a conda environment with kmc, R and a bunch of r-packages, then fetching GenomeScope from GitHub and installing it. You should be able to follow similar steps to get a similar evironment anywhere you like.
+Note you can click on the small arrow next to `genomescope` directory and then on `README.md` to have this README file opened directly in GitPod. If you would like to eventually install the tools at your own computer or cluster, you can take a look at [the configuration .yml file](.gitpod.yml) we used to set up the gitpod. These commands are setting up a conda environment with kmc, R and a bunch of r-packages, then fetching GenomeScope from GitHub and installing it. You should be able to follow similar steps to get a similar evironment anywhere you like.
 
 ## Practical session 1
 
-This session is mostly to get you familiar with running GenomeScope in terminal. For completeness sake, we also show how k-mer spectra can be generated using KMC, but there are many tutorial on k-mer spetra generation out there. You can skip that part and start directly with modeling. 
+This session is mostly to get you familiar with running GenomeScope in terminal. For completeness sake, we also show how k-mer spectra can be generated using FastK, but there are many tutorial on k-mer spetra generation out there. You can skip that part and start directly with modeling. 
 
-### (optional) Generating k-mer spectra using KMC
+### (optional) Generating k-mer spectra using FastK
 
-This section is just to show you how to get a k-mer spectrum out of reads. You don't need to do this for the practical, but just in case you'd like to learn how to run a k-mer counter, here's an example of a [KMC](https://github.com/refresh-bio/KMC) run (k=21) on yeast short-read datasets (SRR3265401). You can find these `.fastq.gz` files in your GitPod workspace (`workspace/data`).
+This section is just to show you how to get a k-mer spectrum out of reads. You don't need to do this for the practical, but just in case you'd like to learn how to run a k-mer counter, here's an example of a [FastK](https://github.com/thegenemyers/FASTK) run (k=31) on yeast short-read datasets (SRR3265401). You can find these `.fastq.gz` files in your GitPod workspace (`workspace/data`).
 
-Note, there are many more k-mer counters. KMC is great one, FastK is another, which is also integrated with many other k-mer tools and will be the counter we will work with here [FastK](https://github.com/thegenemyers/FASTK).
+Note, there are many more k-mer counters. KMC is another great one, for larger datasets we would recommend one of the two as they are very efficient. In this tutorial we will stick with [FastK](https://github.com/thegenemyers/FASTK).
 
 ```
 SAMPLE=SRR3265401
@@ -72,7 +74,7 @@ Histex -G FastK_Table_"$SAMPLE" > "$SAMPLE"_k31.hist
 Have a look at the histogram file that was generated with the KMC transform command:
 
 ```
-(gs) gitpod /workspace $ head "$SAMPLE"_k31.hist
+(gs) gitpod /workspace $ head SRR3265401_k31.hist
 1       21412839
 2       1166085
 3       210516
@@ -87,7 +89,8 @@ Have a look at the histogram file that was generated with the KMC transform comm
 
 The first column is the coverage, that is how many times a kmer is seen in the set of reads. The second column is the number of kmers that occur that many times. In this case, there are 10693844 kmers that only occur once. As we'll get into later, this is probably because these kmers overlap an error. But for now, just know that this `*.hist` format should contain two columns, with the coverage in the first column and the frequency in the second. This is the file will be an input for genomescope!
 
-P.S. if you want to see how to use KMC
+<details>
+<summary><b> Unfold here if you want to see how to do the same using KMC</b></summary>
 
 ```
 SAMPLE=SRR3265401
@@ -98,6 +101,7 @@ kmc -k31 -t4 -m96 -ci1 -cs100000 -fq @FILES $SAMPLE.31.kmc tmp/
 
 kmc_tools transform $SAMPLE.31.kmc histogram $SAMPLE.31.kmc.hist -cx100000
 ```
+</details>
 
 ### Fitting genome models to your kmer spectrum using GenomeScope
 Now you have your own generated .hist (SRR3265401) and many others in the `workspace/histograms/` directory to play with.
@@ -154,7 +158,7 @@ In this case we have a much more heterozygous genome, and it looks diploid. Look
 
 #### Try it on your own
 
-There are a few more histogrmas here. Try to fit the models right.
+There are a few more histogrmas in `genomescope/histograms/`. Try to fit the genome models.
 
 <details>
 <summary><b> Unfold here to see all the histograms</b></summary>
@@ -400,5 +404,7 @@ Notice also how closely our, fairly simple, model reassemble, the sligly more so
 
 ## Conclusions
 
-So, if you got all the way here, and you understand what you have done, you have a very good understanding of how GenomeScope operates. THe principle is failrly understandable, but the combinatoris get a lot crazier for poplyploid models implemented in `GenomeScope2.0`. There are also several other models based on very different ideas, such rethinking the whole problem from the perspective of population genetics (Check [tetmer](https://github.com/hannesbecher/shiny-k-mers)). And there will surely be more to come, but this is it for now!
+So, if you got all the way here, and you understand what you have done, you have a very good understanding about k-mers and how genome modeling and GenomeScope work. The principle is failrly understandable, but the combinatoris get a lot crazier for poplyploid models implemented in `GenomeScope2.0`. There are also several other models based on very different ideas, such rethinking the whole problem from the perspective of population genetics (Check [tetmer](https://github.com/hannesbecher/shiny-k-mers)).
+
+If you are interested in solidifying your k-mer intuition, it might be good time to read out k-mer review: https://arxiv.org/abs/2404.01519. Other than that, I would just recommend to do more k-mer counting and modeling.
 
